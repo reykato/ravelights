@@ -42,19 +42,19 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     String str = (char*)data;
     if (str == "toggle") {
       toggleOnOff();
-    } else if (str == "white") {
+    } else if (str == "mode0") {
       ledMode = 0;
       lightsOn = 1;
       ws.textAll("on");
-    } else if (str == "hue") {
+    } else if (str == "mode1") {
       ledMode = 1;
       lightsOn = 1;
       ws.textAll("on");
-    } else if (str == "rainbow") {
+    } else if (str == "mode2") {
       ledMode = 3;
       lightsOn = 1;
       ws.textAll("on");
-    } else if (str == "pulse") {
+    } else if (str == "mode3") {
       ledMode = 4;
       lightsOn = 1;
       ws.textAll("on");

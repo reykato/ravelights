@@ -20,13 +20,13 @@ var gateway = `ws://${window.location.hostname}/ws`;
     console.log(eventData);
     //document.getElementById('state').innerHTML = eventData;
     if (eventData == 'on' || eventData == 'off') {
-      document.getElementById('button').checked = (eventData == 'on');
+      document.getElementById('toggle').checked = (eventData == 'on');
     } else if (eventData[0] == "#") {
-      document.getElementById('colorpicker').value = eventData;
+      document.getElementById('hueRange').value = eventData;
     } else if (eventData[0] == "V") {
       // do nothing because there is no battery
     } else if (eventData != "DB_HIT") {
-      document.getElementById('myRange').value = eventData;
+      document.getElementById('brightnessSlider').value = eventData;
     }
   }
   function onLoad(event) {
@@ -34,26 +34,26 @@ var gateway = `ws://${window.location.hostname}/ws`;
     initButton();
   }
   function initButton() {
-    document.getElementById('button').addEventListener('click', sendMessage.bind(null, 'toggle'));
-    document.getElementById('colorpicker').addEventListener('input', onHueChange);
-    document.getElementById('white').addEventListener('click', sendMessage.bind(null, 'white'));
-    document.getElementById('hue').addEventListener('click', sendMessage.bind(null, 'hue'));
-    document.getElementById('rainbow').addEventListener('click', sendMessage.bind(null, 'rainbow'));
-    document.getElementById('pulse').addEventListener('click', sendMessage.bind(null, 'pulse'));
+    document.getElementById('toggle').addEventListener('click', sendMessage.bind(null, 'toggle'));
+    document.getElementById('hueRange').addEventListener('input', onHueChange);
+    document.getElementById('mode0').addEventListener('click', sendMessage.bind(null, 'mode0'));
+    document.getElementById('mode1').addEventListener('click', sendMessage.bind(null, 'mode1'));
+    document.getElementById('mode2').addEventListener('click', sendMessage.bind(null, 'mode2'));
+    document.getElementById('mode3').addEventListener('click', sendMessage.bind(null, 'mode3'));
     document.getElementById('manualhit').addEventListener('click', sendMessage.bind(null, 'DB_HIT'));
-    document.getElementById('myRange').addEventListener('input', onBrightnessChange);
+    document.getElementById('brightnessSlider').addEventListener('input', onBrightnessChange);
   }
   function sendMessage(msg) {
     console.log(msg);
     websocket.send(msg);
   }
   function onHueChange() {
-    var color = document.getElementById('colorpicker').value;
+    var color = document.getElementById('hueRange').value;
     console.log(color);
     websocket.send(color);
   }
   function onBrightnessChange() {
-    var brightness = document.getElementById('myRange').value;
+    var brightness = document.getElementById('brightnessSlider').value;
     console.log(brightness);
     websocket.send(brightness);
   }

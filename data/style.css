@@ -95,7 +95,7 @@ input:checked + .switchspan:before {
   display: inline-flex;
 }
 
-#colorpicker {
+#hueRange {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -107,11 +107,11 @@ input:checked + .switchspan:before {
   border: none;
   cursor: pointer;
 }
-#colorpicker::-webkit-color-swatch {
+#hueRange::-webkit-color-swatch {
   border-radius: 15px;
   border: none;
 }
-#colorpicker::-moz-color-swatch {
+#hueRange::-moz-color-swatch {
   border-radius: 15px;
   border: none;
 }

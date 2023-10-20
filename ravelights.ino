@@ -72,18 +72,19 @@ void rainbow() {
 
 uint8_t reactiveBrightness = 25;
 unsigned int prevReactiveTimer = 5;
+bool firstRun = true;
 
 void reactive() {
+  if (hitRegistered) {
+    reactiveBrightness = 255;
+    hitRegistered = false;
+  }
+  
   if (millis() - prevReactiveTimer >= 5) {
     if (reactiveBrightness > 25) {
       reactiveBrightness--;
     }
     prevReactiveTimer = millis();
-  }
-  
-  if (hitRegistered) {
-    reactiveBrightness = 255;
-    hitRegistered = false;
   }
   
   strip.fill(strip.Color(c.R_Byte(), c.G_Byte(), c.B_Byte()));
