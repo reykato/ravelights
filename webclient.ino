@@ -10,11 +10,11 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
 
-String lightStatus = "off";
+String lightStatus = "on";
 void toggleOnOff() {
   if (lightsOn) {
     prevLedMode = ledMode;
-    ledMode = 2;
+    ledMode = 0;
     lightsOn = 0;
     lightStatus = "off";
   } else {
@@ -40,30 +40,19 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     String str = (char*)data;
+    
     if (str == "toggle") {
       toggleOnOff();
-    } else if (str == "mode0") {
-      ledMode = 0;
+    } else if (str.substring(0, 4) == "mode") {
+      ledMode =  str.substring(4).toInt();
       lightsOn = 1;
       ws.textAll("on");
-    } else if (str == "mode1") {
-      ledMode = 1;
-      lightsOn = 1;
-      ws.textAll("on");
-    } else if (str == "mode2") {
-      ledMode = 3;
-      lightsOn = 1;
-      ws.textAll("on");
-    } else if (str == "mode3") {
-      ledMode = 4;
-      lightsOn = 1;
-      ws.textAll("on");
-      initWebClient();
     } else if (str == "DB_HIT") {
       hitRegistered = true;
-    } else if (str.substring(0, 1) == "#") { // if hue value {
+      ws.textAll("right avg: " + (String) rightTouchAvg + ", middle avg: " + (String) middleTouchAvg + ", left avg: " + (String) leftTouchAvg + ", leftTouch: " + (String) leftTouchVal + ", middleTouch: " + (String) middleTouchVal + ", rightTouch: " + (String) rightTouchVal);
+    } else if (str.substring(0, 1) == "#") {
       c = ESP_Color::Color::FromHex(str);
-    } else { // must be brightness value
+    } else {
       brightness = str.toInt();
     }
   }
@@ -75,7 +64,7 @@ void onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
     case WS_EVT_CONNECT:
       lightStatus = (lightsOn) ? "on" : "off";
       ws.textAll(lightStatus);
-      ws.textAll(String((int)brightness));
+      ws.textAll("b" + String(brightness));
       ws.textAll("#" + c.ToHex(0, 0, 0));
       connectedClients = ws.count();
       break;

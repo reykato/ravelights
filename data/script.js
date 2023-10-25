@@ -25,9 +25,11 @@ var gateway = `ws://${window.location.hostname}/ws`;
       document.getElementById('hueRange').value = eventData;
     } else if (eventData[0] == "V") {
       // do nothing because there is no battery
+    } else if (eventData[0] == "b") {
+      document.getElementById('brightnessSlider').value = eventData.substring(1);
     } else if (eventData != "DB_HIT") {
-      document.getElementById('brightnessSlider').value = eventData;
-    }
+      // do nothing
+    } 
   }
   function onLoad(event) {
     initWebSocket();
@@ -36,10 +38,10 @@ var gateway = `ws://${window.location.hostname}/ws`;
   function initButton() {
     document.getElementById('toggle').addEventListener('click', sendMessage.bind(null, 'toggle'));
     document.getElementById('hueRange').addEventListener('input', onHueChange);
-    document.getElementById('mode0').addEventListener('click', sendMessage.bind(null, 'mode0'));
     document.getElementById('mode1').addEventListener('click', sendMessage.bind(null, 'mode1'));
     document.getElementById('mode2').addEventListener('click', sendMessage.bind(null, 'mode2'));
     document.getElementById('mode3').addEventListener('click', sendMessage.bind(null, 'mode3'));
+    document.getElementById('mode4').addEventListener('click', sendMessage.bind(null, 'mode4'));
     document.getElementById('manualhit').addEventListener('click', sendMessage.bind(null, 'DB_HIT'));
     document.getElementById('brightnessSlider').addEventListener('input', onBrightnessChange);
   }

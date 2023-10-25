@@ -11,6 +11,10 @@
 #define LED_PIN D0
 #define LED_PIN_TWO D1
 
+#define RIGHT_TOUCH_PIN T7
+#define MIDDLE_TOUCH_PIN T8
+#define LEFT_TOUCH_PIN T9
+
 #define WIFI_SSID    "Verizon_6NSP4Q"
 #define WIFI_PASS    "splash9-fax-con"
 
@@ -18,14 +22,28 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 Adafruit_NeoPixel stripTwo(LED_COUNT, LED_PIN_TWO, NEO_RGB + NEO_KHZ800);
 ESP_Color::Color c;
 String hexColor = "";
-unsigned int ledMode = 0;
-unsigned int prevLedMode = 0;
+unsigned int ledMode = 1;
+unsigned int prevLedMode = 1;
 bool lightsOn = 1;
 String hueString = "";
 
 int brightness = 80;
 int brightnessLast = 80;
 int avgZValue = 0;
+
+unsigned int touchThreshold = 46000;
+unsigned int debounce = 0;
+int rightTouchVal = 0;
+int middleTouchVal = 0;
+int leftTouchVal = 0;
+bool rightPrevPressed = false;
+bool middlePrevPressed = false;
+bool leftPrevPressed = false;
+int rightTouchAvg = 0;
+int middleTouchAvg = 0;
+int leftTouchAvg = 0;
+bool brightnessGoingUp = true;
+
 
 unsigned int connectedClients = 0;
 unsigned int lastConnectedClients = 0;
@@ -113,6 +131,86 @@ void setupWiFi() {
   Serial.println("Connected! Starting OTA.");
   Serial.println("Finished booting. :D");
 }
+
+void initButtons() {
+  for (int i = 0; i < 20; i++) {
+    rightTouchAvg += touchRead(RIGHT_TOUCH_PIN);
+    middleTouchAvg += touchRead(MIDDLE_TOUCH_PIN);
+    leftTouchAvg += touchRead(LEFT_TOUCH_PIN);
+    delay(3);
+  }
+  rightTouchAvg /= 20;
+  middleTouchAvg /= 20;
+  leftTouchAvg /= 20;
+}
+
+void handleTouchButtons() {
+  if (millis() - debounce >= 50) {
+    rightTouchVal = 0;
+    middleTouchVal = 0;
+    leftTouchVal = 0;
+    for (int i = 0; i < 4; i++) {
+      rightTouchVal += touchRead(RIGHT_TOUCH_PIN);
+      middleTouchVal += touchRead(MIDDLE_TOUCH_PIN);
+      leftTouchVal += touchRead(LEFT_TOUCH_PIN);
+    }
+    rightTouchVal /= 4;
+    middleTouchVal /= 4;
+    leftTouchVal /= 4;
+    
+    debounce = millis();
+  }
+
+  // ----- TOUCH PRESS HANDLING -----
+  
+  // Button on right side (on/off)
+  if (abs(rightTouchVal - rightTouchAvg) > touchThreshold) {
+    if (!rightPrevPressed) { // button was just pressed
+      toggleOnOff();
+      rightPrevPressed = true;
+    }
+  } else {
+    rightPrevPressed = false;
+  }
+
+  // Button in middle (mode cycling)
+  if (abs(middleTouchVal - middleTouchAvg) > touchThreshold) {
+    if (!middlePrevPressed) { // button was just pressed
+      if (ledMode < 5 && lightsOn) {
+        ledMode++;
+      } else if (lightsOn) {
+        ledMode = 1;
+      }
+      middlePrevPressed = true;
+    }
+  } else {
+    middlePrevPressed = false;
+  }
+
+  // Button in middle (mode cycling)
+  if (abs(leftTouchVal - leftTouchAvg) > touchThreshold) {
+    if (!leftPrevPressed) { // button was just pressed
+      if (brightness < 255) brightnessGoingUp = true;
+      else brightnessGoingUp = false;
+      leftPrevPressed = true;
+    } else { // button is being held
+      if (brightnessGoingUp && brightness < 255) {
+        brightness++;
+      } else if (brightnessGoingUp && brightness == 255) {
+        brightnessGoingUp = false;
+        brightness--;
+      } else if (!brightnessGoingUp && brightness > 1) {
+        brightness--;
+      } else if (!brightnessGoingUp && brightness == 1) {
+        brightnessGoingUp = true;
+        brightness++;
+      }
+    }
+  } else {
+    leftPrevPressed = false;
+  }
+}
+
 // ====================================================================================================================================
 
 void setup() {
@@ -121,6 +219,7 @@ void setup() {
   Serial.println("Serial Initialized");
   pinMode(LED_PIN, OUTPUT);
   pinMode(LED_PIN_TWO, OUTPUT);
+  //pinMode(TOGGLE_BTN_PIN, INPUT);
   delay(1000);             // sanity check delay - allows reprogramming if accidently blowing power w/leds
   strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
   stripTwo.begin();
@@ -135,6 +234,8 @@ void setup() {
   setupOTA();
   startWebServer();
   initWebClient();
+
+  initButtons();
   
   xTaskCreatePinnedToCore(
     handleWS,
@@ -165,25 +266,26 @@ void setup() {
 }
 
 void loop() {  
-    switch (ledMode) {
-      case 0:
-        setAllWhite();
-        break;
-      case 1:
-        hueChange();
-        break;
-      case 2:
-        off();
-        break;
-      case 3:
-        rainbow();
-        break;
-      case 4:
-        reactive();
-        break;
-      default:
-        ledMode = 0;
-        break;
+  handleTouchButtons();
+  switch (ledMode) {
+    case 0:
+      off();
+      break;
+    case 1:
+      setAllWhite();
+      break;
+    case 2:
+      hueChange();
+      break;
+    case 3:
+      rainbow();
+      break;
+    case 4:
+      reactive();
+      break;
+    default:
+      ledMode = 1;
+      break;
     }
   strip.show();
   stripTwo.show();
