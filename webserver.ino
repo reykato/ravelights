@@ -1,31 +1,27 @@
-#include <ArduinoWebsockets.h>
+#include "WiFiUDP.h"
 
-using namespace websockets;
+//define ip and port for udp
+IPAddress UDP_ADDRESS = IPAddress(192,168,1,179);
+#define UDP_PORT 6969
 
-WebsocketsClient client;
+//create udp object
+WiFiUDP udp;
 
-void initWebClient() {
-  Serial.println("Starting Web Client.");
-  
-  if (!client.available()) {
-    ws.textAll("Dartboard not available, connecting.");
-    bool conn = client.connect("192.168.1.179", 80, "/ws");
-    ws.textAll("Connection status: " + (String) conn);
-    client.onMessage([&](WebsocketsMessage message){
-      ws.textAll("Got Message: " + message.data());
-      Serial.print("Got Message: ");
-      Serial.println(message.data());
-      if (message.data().equals("DB_HIT")) {
-        hitRegistered = true;
-      }
-    });
-  }
-  //Serial.println("Web Client: " + (String)conn);  
+void initUDP() {
+  Serial.println("Starting UDP Client.");
+  udp.begin(UDP_PORT);
+  ws.textAll("Connected to UDP");
 }
 
-void handleWSClient(void *parameter) {
+void handleUDPClient(void *parameter) {
   for (;;) {
-    client.poll();
-    vTaskDelay(20);
+    if(udp.parsePacket() > 0) {
+      char buff[100];
+      udp.read(buff, size_t(100));
+      String message = String(buff);
+      //ws.textAll("Got new udp message: " + message);
+      if(message.equals("DB_HIT")) hitRegistered = true;
+    }
+    vTaskDelay(1);
   }
 }
